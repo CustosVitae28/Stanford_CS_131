@@ -1,8 +1,8 @@
 import math
-
 import numpy as np
 from PIL import Image
-from skimage import color, io
+from skimage import io
+from skimage.color import rgb2gray, rgb2lab, rgb2hsv
 
 
 def load(image_path):
@@ -16,12 +16,12 @@ def load(image_path):
     Returns:
         out: numpy array of shape(image_height, image_width, 3).
     """
-    out = None
 
-    ### YOUR CODE HERE
+    # YOUR CODE HERE
     # Use skimage io.imread
-    pass
-    ### END YOUR CODE
+    out = io.imread(image_path)
+    print(out)
+    # END YOUR CODE
 
     # Let's convert the image to be between the correct range.
     out = out.astype(np.float64) / 255
@@ -44,9 +44,9 @@ def dim_image(image):
 
     out = None
 
-    ### YOUR CODE HERE
-    pass
-    ### END YOUR CODE
+    # YOUR CODE HERE
+    out = 0.5 * np.square(image)
+    # END YOUR CODE
 
     return out
 
@@ -63,11 +63,10 @@ def convert_to_grey_scale(image):
     Returns:
         out: numpy array of shape(image_height, image_width).
     """
-    out = None
 
-    ### YOUR CODE HERE
-    pass
-    ### END YOUR CODE
+    # YOUR CODE HERE
+    out = rgb2gray(image)
+    # END YOUR CODE
 
     return out
 
@@ -83,11 +82,12 @@ def rgb_exclusion(image, channel):
         out: numpy array of shape(image_height, image_width, 3).
     """
 
-    out = None
+    # YOUR CODE HERE
+    RGB = ['R', 'G', 'B']
+    out = image.copy()
+    out[..., RGB.index(channel)] = 0
 
-    ### YOUR CODE HERE
-    pass
-    ### END YOUR CODE
+    # END YOUR CODE
 
     return out
 
@@ -103,17 +103,17 @@ def lab_decomposition(image, channel):
         out: numpy array of shape(image_height, image_width).
     """
 
-    lab = color.rgb2lab(image)
-    out = None
+    lab = rgb2lab(image)
 
-    ### YOUR CODE HERE
-    pass
-    ### END YOUR CODE
+    # YOUR CODE HERE
+    LAB = ['L', 'A', 'B']
+    out = lab[..., LAB.index(channel)]
+    # END YOUR CODE
 
     return out
 
 
-def hsv_decomposition(image, channel='H'):
+def hsv_decomposition(image, channel):
     """Decomposes the image into HSV and only returns the channel specified.
 
     Args:
@@ -124,12 +124,13 @@ def hsv_decomposition(image, channel='H'):
         out: numpy array of shape(image_height, image_width).
     """
 
-    hsv = color.rgb2hsv(image)
-    out = None
+    hsv = rgb2hsv(image)
 
-    ### YOUR CODE HERE
-    pass
-    ### END YOUR CODE
+    # YOUR CODE HERE
+    HSV = ['H', 'S', 'V']
+    out = hsv[..., HSV.index(channel)]
+
+    # END YOUR CODE
 
     return out
 
@@ -152,10 +153,16 @@ def mix_images(image1, image2, channel1, channel2):
         out: numpy array of shape(image_height, image_width, 3).
     """
 
-    out = None
-    ### YOUR CODE HERE
-    pass
-    ### END YOUR CODE
+    # YOUR CODE HERE
+    image1 = rgb_exclusion(image1, channel1)
+    image2 = rgb_exclusion(image2, channel2)
+    height, width, _ = image1.shape
+    cut = width // 2
+    s1 = image1[:, :cut]
+    s2 = image2[:, cut:]
+    out = np.concatenate((s1, s2), axis=1)
+
+    # END YOUR CODE
 
     return out
 
@@ -180,10 +187,17 @@ def mix_quadrants(image):
     Returns:
         out: numpy array of shape(image_height, image_width, 3).
     """
-    out = None
 
-    ### YOUR CODE HERE
-    pass
-    ### END YOUR CODE
+    # YOUR CODE HERE
+    upper_half = np.hsplit(np.vsplit(image, 2)[0], 2)
+    lower_half = np.hsplit(np.vsplit(image, 2)[1], 2)
+
+    top_left = rgb_exclusion(upper_half[0], 'R')
+    top_right = dim_image(upper_half[1])
+    bottom_left = lower_half[0]**0.5
+    bottom_right = rgb_exclusion(lower_half[1], 'R')
+
+    out = np.vstack([np.hstack([top_left, top_right]), np.hstack([bottom_left, bottom_right])])
+    # END YOUR CODE
 
     return out
